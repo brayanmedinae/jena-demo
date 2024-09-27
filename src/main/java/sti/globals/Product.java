@@ -1,22 +1,19 @@
 package sti.globals;
 
+import lombok.*;
+
+@Getter
+@Setter
+@ToString
 public class Product {
     private int id;
     private String category;
-    private String discount;
+    private double price;
+    private double discount;
 
-    public Product(int id, String category) {
+    public Product(int id, String category, double price) {
         this.id = id;
         this.category = category;
-    }
-
-    public int getId() { return id; }
-    public String getCategory() { return category; }
-    public String getDiscount() { return discount; }
-    public void setDiscount(String discount) { this.discount = discount; }
-
-    @Override
-    public String toString() {
-        return "Product{id='" + id + "', category='" + category + "', discount='" + discount + "'}";
+        this.price = price;
     }
 }

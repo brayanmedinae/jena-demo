@@ -11,6 +11,7 @@ import org.slf4j.LoggerFactory;
 import java.util.ArrayList;
 import java.util.List;
 
+import static java.lang.Math.round;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ProductTest {
@@ -21,53 +22,45 @@ class ProductTest {
     void discountTest() {
         double start = System.currentTimeMillis();
 
-        // Create a model
         Model model = ModelFactory.createDefaultModel();
         String ns = "http://example.org/products#";
 
-        // Create properties
         Property hasCategory = model.createProperty(ns + "hasCategory");
         Property hasDiscount = model.createProperty(ns + "hasDiscount");
 
-        // Create product list
         List<Product> products = new ArrayList<>();
-        products.add(new Product(1, "premium"));
-        products.add(new Product(2, "standard"));
-        products.add(new Product(3, "normal"));
+        products.add(new Product(1, "premium", 100));
+        products.add(new Product(2, "standard", 100));
+        products.add(new Product(3, "normal", 100));
 
-        // Add products to the model
         for (Product product : products) {
             model.createResource(ns + product.getId())
                     .addProperty(hasCategory, product.getCategory());
         }
 
-        // Define the rules
         String rules =
-                "[premiumRule: (?product " + hasCategory + " 'premium') -> (?product " + hasDiscount + " '20%')]" +
-                        "[standardRule: (?product " + hasCategory + " 'standard') -> (?product " + hasDiscount + " '5%')]" +
-                        "[normalRule: (?product " + hasCategory + " 'normal') -> (?product " + hasDiscount + " '0%')]";
+                "[premiumRule: (?product " + hasCategory + " 'premium') -> (?product " + hasDiscount + " 0.20)]" +
+                        "[standardRule: (?product " + hasCategory + " 'standard') -> (?product " + hasDiscount + " 0.05)]" +
+                        "[normalRule: (?product " + hasCategory + " 'normal') -> (?product " + hasDiscount + " 0)]";
 
-        // Create a reasoner with the rules
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
         InfModel infModel = ModelFactory.createInfModel(reasoner, model);
 
-        // Query the model and update product objects
         for (Product product : products) {
             Resource productResource = infModel.getResource(ns + product.getId());
             Statement discountStmt = productResource.getProperty(hasDiscount);
             if (discountStmt != null) {
-                product.setDiscount(discountStmt.getString());
+                product.setDiscount(product.getPrice() * discountStmt.getDouble());
             }
         }
 
-        // Print results
         for (Product product : products) {
             LOGGER.info(product.toString());
         }
 
-        assertEquals("20%", products.get(0).getDiscount());
-        assertEquals("5%", products.get(1).getDiscount());
-        assertEquals("0%", products.get(2).getDiscount());
+        assertEquals(80, round(products.get(0).getPrice() - products.get(0).getDiscount()));
+        assertEquals(95, round(products.get(1).getPrice() - products.get(1).getDiscount()));
+        assertEquals(100, round(products.get(2).getPrice() - products.get(2).getDiscount()));
 
         double end = System.currentTimeMillis();
         LOGGER.info("Execution time: {} ms", (end - start));

@@ -38,10 +38,11 @@ class ProductTest {
                     .addProperty(hasCategory, product.getCategory());
         }
 
-        String rules =
-                "[premiumRule: (?product " + hasCategory + " 'premium') -> (?product " + hasDiscount + " 0.20)]" +
-                        "[standardRule: (?product " + hasCategory + " 'standard') -> (?product " + hasDiscount + " 0.05)]" +
-                        "[normalRule: (?product " + hasCategory + " 'normal') -> (?product " + hasDiscount + " 0)]";
+        String rules = "# Product discount rules\n" +
+                "@prefix ns: <http://example.org/products#>\n" +
+                "[premiumRule: (?product ns:hasCategory 'premium') -> (?product ns:hasDiscount 0.20)]\n" +
+                "[standardRule: (?product ns:hasCategory 'standard') -> (?product ns:hasDiscount 0.05)]\n" +
+                "[normalRule: (?product ns:hasCategory 'normal') -> (?product ns:hasDiscount 0)]";
 
         Reasoner reasoner = new GenericRuleReasoner(Rule.parseRules(rules));
         InfModel infModel = ModelFactory.createInfModel(reasoner, model);
